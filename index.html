@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Building Maintenance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c4a6e 0%, #1e40af 50%, #7c3aed 100%);
+            overflow: hidden;
+            color: white;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .dashboard-panel {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-panel:hover {
+            background: rgba(15, 23, 42, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .top-left {
+            top: 20px;
+            left: 20px;
+            width: 320px;
+        }
+
+        .top-right {
+            top: 20px;
+            right: 20px;
+            width: 280px;
+        }
+
+        .bottom-left {
+            bottom: 20px;
+            left: 20px;
+            width: 380px;
+        }
+
+        .bottom-right {
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+        }
+
+        .center-panel {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            text-align: center;
+        }
+
+        h3 {
+            margin-bottom: 18px;
+            color: #e2e8f0;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: #3b82f6;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 16px;
+            color: #10b981;
+        }
+
+        .stat-value.warning {
+            color: #f59e0b;
+        }
+
+        .stat-value.critical {
+            color: #ef4444;
+        }
+
+        .control-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.6);
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .sensor-card {
+            background: rgba(30, 41, 59, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            text-align: center;
+        }
+
+        .sensor-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .sensor-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .hotspot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .alert-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-offline { background: #ef4444; }
+
+        @media (max-width: 1024px) {
+            .dashboard-panel {
+                padding: 16px;
+            }
+            
+            .top-left, .top-right, .bottom-left, .bottom-right {
+                width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-spinner"></div>
+            <div id="loading-text">Loading 3D Building Model...</div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="ui-overlay">
+            <!-- Building Information Panel -->
+            <div class="dashboard-panel top-left">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7v10c0 5.55 3.84 10 9 11 5.16-1 9-5.45 9-11V7l-10-5z"/></svg>
+                    Building Information
+                </h3>
+                <div class="stat-item">
+                    <span class="stat-label">Building Name:</span>
+                    <span class="stat-value">Japanese Apartment 2F+PHF</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Floors:</span>
+                    <span class="stat-value">4</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Units:</span>
+                    <span class="stat-value">8</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Building Status:</span>
+                    <span class="stat-value">
+                        <span class="status-indicator status-online"></span>
+                        Active
+                    </span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Last Maintenance:</span>
+                    <span class="stat-value">2 days ago</span>
+                </div>
+            </div>
+
+            <!-- System Controls Panel -->
+            <div class="dashboard-panel top-right">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/></svg>
+                    System Controls
+                </h3>
+                <div class="control-group">
+                    <label>Camera View:</label>
+                    <select id="cameraView">
+                        <option value="overview">Overview</option>
+                        <option value="floor1">Floor 1</option>
+                        <option value="floor2">Floor 2</option>
+                        <option value="rooftop">Rooftop</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Lighting Mode:</label>
+                    <select id="lightingMode">
+                        <option value="day">Day</option>
+                        <option value="night">Night</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="resetCamera">Reset Camera View</button>
+                </div>
+                <div class="control-group">
+                    <button id="toggleHotspots">Toggle Sensor Hotspots</button>
+                </div>
+            </div>
+
+            <!-- IoT Sensors & Monitoring Panel -->
+            <div class="dashboard-panel bottom-left">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    IoT Sensors & Monitoring
+                </h3>
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <div class="sensor-title">Temperature</div>
+                        <div class="sensor-value" id="temperature">22.5°C</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-title">Humidity</div>
+                        <div class="sensor-value" id="humidity">45%</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-title">Air Quality</div>
+                        <div class="sensor-value" id="airQuality">Good</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-title">Occupancy</div>
+                        <div class="sensor-value" id="occupancy">6/8</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Energy Consumption:</span>
+                    <span class="stat-value" id="energy">3.2 kW</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Water Usage:</span>
+                    <span class="stat-value" id="water">245 L/day</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Security Status:</span>
+                    <span class="stat-value">
+                        <span class="status-indicator status-online"></span>
+                        All Systems Secure
+                    </span>
+                </div>
+            </div>
+
+            <!-- Maintenance & Alerts Panel -->
+            <div class="dashboard-panel bottom-right">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Maintenance & Alerts
+                </h3>
+                <div class="stat-item">
+                    <span class="stat-label">Active Alerts:</span>
+                    <span class="stat-value warning" id="activeAlerts">2</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Maintenance Due:</span>
+                    <span class="stat-value" id="maintenanceDue">3 items</span>
+                </div>
+                <div class="control-group">
+                    <button id="viewAlerts">View All Alerts</button>
+                </div>
+                <div class="control-group">
+                    <button id="scheduleMain">Schedule Maintenance</button>
+                </div>
+                <div class="control-group">
+                    <button id="emergencyMode">Emergency Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tooltip" class="tooltip"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls, mixer, model;
+        let animationId;
+        let isWireframe = false;
+        let hotspotsVisible = true;
+        let sensorData = {};
+        let alertCount = 2;
+        
+        // Initialize the application
+        function init() {
+            setupScene();
+            setupLighting();
+            addEnvironment();
+            loadBuildingModel();
+            setupEventListeners();
+            startDataSimulation();
+            animate();
+        }
+        
+        function setupScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(30, 20, 30);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2;
+            controls.minDistance = 10;
+            controls.maxDistance = 100;
+        }
+        
+        function setupLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            // Directional light (sun)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 25);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 200;
+            directionalLight.shadow.camera.left = -50;
+            directionalLight.shadow.camera.right = 50;
+            directionalLight.shadow.camera.top = 50;
+            directionalLight.shadow.camera.bottom = -50;
+            scene.add(directionalLight);
+            
+            // Point lights for interior lighting
+            const pointLight1 = new THREE.PointLight(0xffffff, 0.6, 30);
+            pointLight1.position.set(0, 15, 0);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0xfff2cc, 0.4, 20);
+            pointLight2.position.set(10, 10, 10);
+            scene.add(pointLight2);
+        }
+        
+        function addEnvironment() {
+            // Ground plane
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x7c9885 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Add some environmental elements
+            addTrees();
+            addSkybox();
+        }
+        
+        function addTrees() {
+            const treeGeometry = new THREE.ConeGeometry(2, 8, 8);
+            const treeMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5a27 });
+            
+            const positions = [
+                { x: -25, z: -25 },
+                { x: 25, z: -25 },
+                { x: -25, z: 25 },
+                { x: 30, z: 20 }
+            ];
+            
+            positions.forEach(pos => {
+                const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+                tree.position.set(pos.x, 4, pos.z);
+                tree.castShadow = true;
+                scene.add(tree);
+            });
+        }
+        
+        function addSkybox() {
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({
+                color: 0x87CEEB,
+                side: THREE.BackSide
+            });
+            const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(sky);
+        }
+        
+        function loadBuildingModel() {
+            const loader = new THREE.GLTFLoader();
+            const loadingScreen = document.getElementById('loading-screen');
+            const loadingText = document.getElementById('loading-text');
+            const progressFill = document.getElementById('progress-fill');
+            
+            // Try multiple model paths
+            const modelPaths = [
+                'models/japanese_apartment.glb',
+                'models/building.glb',
+                'models/apartment.gltf',
+                'models/japanese_building.glb'
+            ];
+            
+            let modelLoaded = false;
+            let currentModelIndex = 0;
+            
+            function tryLoadModel(index) {
+                if (index >= modelPaths.length) {
+                    console.log('No 3D model found. Using enhanced placeholder building.');
+                    loadingText.textContent = 'Using enhanced placeholder building...';
+                    createEnhancedPlaceholderBuilding();
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 1500);
+                    return;
+                }
+                
+                const modelPath = modelPaths[index];
+                loadingText.textContent = `Trying to load: ${modelPath.split('/').pop()}...`;
+                
+                loader.load(
+                    modelPath,
+                    function (gltf) {
+                        console.log('Successfully loaded model:', modelPath);
+                        model = gltf.scene;
+                        
+                        // Auto-scale the model to fit well in the scene
+                        const box = new THREE.Box3().setFromObject(model);
+                        const size = box.getSize(new THREE.Vector3());
+                        const maxDimension = Math.max(size.x, size.y, size.z);
+                        const scale = 20 / maxDimension; // Target size of 20 units
+                        
+                        model.scale.set(scale, scale, scale);
+                        
+                        // Center the model
+                        const center = box.getCenter(new THREE.Vector3());
+                        model.position.sub(center.multiplyScalar(scale));
+                        model.position.y = 0; // Keep it on the ground
+                        
+                        // Enable shadows
+                        model.traverse(function (child) {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                
+                                // Enhance materials
+                                if (child.material) {
+                                    child.material.needsUpdate = true;
+                                }
+                            }
+                        });
+                        
+                        scene.add(model);
+                        
+                        // Setup animations if any
+                        if (gltf.animations && gltf.animations.length > 0) {
+                            mixer = new THREE.AnimationMixer(model);
+                            gltf.animations.forEach(clip => {
+                                const action = mixer.clipAction(clip);
+                                action.play();
+                            });
+                        }
+                        
+                        // Add sensor hotspots
+                        addSensorHotspots();
+                        
+                        // Hide loading screen
+                        loadingScreen.style.display = 'none';
+                        modelLoaded = true;
+                    },
+                    function (progress) {
+                        if (progress.total > 0) {
+                            const percentComplete = (progress.loaded / progress.total) * 100;
+                            progressFill.style.width = percentComplete + '%';
+                            loadingText.textContent = `Loading ${modelPath.split('/').pop()}: ${Math.round(percentComplete)}%`;
+                        }
+                    },
+                    function (error) {
+                        console.log(`Failed to load ${modelPath}:`, error.message);
+                        tryLoadModel(index + 1);
+                    }
+                );
+            }
+            
+            // Start trying to load models
+            tryLoadModel(0);
+        }
+        
+        function createEnhancedPlaceholderBuilding() {
+            // Create a modern Japanese apartment-style building
+            const buildingGroup = new THREE.Group();
+            
+            // Building materials
+            const concreteMaterial = new THREE.MeshLambertMaterial({ color: 0xe8e4d9 });
+            const windowMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x87ceeb, 
+                transparent: true, 
+                opacity: 0.7,
+                emissive: 0x001122
+            });
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            const balconyMaterial = new THREE.MeshLambertMaterial({ color: 0xbdc3c7 });
+            const accentMaterial = new THREE.MeshLambertMaterial({ color: 0x34495e });
+            
+            // Main building structure (4 floors + penthouse)
+            const mainGeometry = new THREE.BoxGeometry(14, 18, 10);
+            const mainBuilding = new THREE.Mesh(mainGeometry, concreteMaterial);
+            mainBuilding.position.y = 9;
+            mainBuilding.castShadow = true;
+            mainBuilding.receiveShadow = true;
+            buildingGroup.add(mainBuilding);
+            
+            // Penthouse
+            const penthouseGeometry = new THREE.BoxGeometry(10, 4, 8);
+            const penthouse = new THREE.Mesh(penthouseGeometry, concreteMaterial);
+            penthouse.position.y = 20;
+            penthouse.castShadow = true;
+            buildingGroup.add(penthouse);
+            
+            // Modern flat roof
+            const roofGeometry = new THREE.BoxGeometry(12, 0.5, 9);
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.y = 22.5;
+            roof.castShadow = true;
+            buildingGroup.add(roof);
+            
+            // Window frames and balconies
+            const floors = 4;
+            const unitsPerFloor = 4;
+            
+            // Create windows and balconies for each floor
+            for (let floor = 0; floor < floors; floor++) {
+                const floorY = 3 + floor * 4;
+                
+                // Front facade
+                for (let unit = 0; unit < unitsPerFloor; unit++) {
+                    const unitX = -5.25 + unit * 3.5;
+                    
+                    // Large window
+                    const windowGeometry = new THREE.PlaneGeometry(2.5, 2.8);
+                    const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                    window.position.set(unitX, floorY, 5.1);
+                    buildingGroup.add(window);
+                    
+                    // Window frame
+                    const frameGeometry = new THREE.PlaneGeometry(2.7, 3);
+                    const frame = new THREE.Mesh(frameGeometry, accentMaterial);
+                    frame.position.set(unitX, floorY, 5.05);
+                    buildingGroup.add(frame);
+                    
+                    // Balcony (floors 2-4)
+                    if (floor > 0) {
+                        const balconyGeometry = new THREE.BoxGeometry(3, 0.15, 1.8);
+                        const balcony = new THREE.Mesh(balconyGeometry, balconyMaterial);
+                        balcony.position.set(unitX, floorY - 1.5, 6);
+                        balcony.castShadow = true;
+                        buildingGroup.add(balcony);
+                        
+                        // Balcony railing
+                        const railingGeometry = new THREE.BoxGeometry(3, 1, 0.1);
+                        const railing = new THREE.Mesh(railingGeometry, accentMaterial);
+                        railing.position.set(unitX, floorY - 0.8, 6.8);
+                        buildingGroup.add(railing);
+                    }
+                }
+                
+                // Side windows
+                for (let side = 0; side < 2; side++) {
+                    const sideX = side === 0 ? -7.1 : 7.1;
+                    const rotation = side === 0 ? -Math.PI / 2 : Math.PI / 2;
+                    
+                    for (let window = 0; window < 2; window++) {
+                        const windowZ = -3 + window * 6;
+                        
+                        const sideWindowGeometry = new THREE.PlaneGeometry(2, 2.5);
+                        const sideWindow = new THREE.Mesh(sideWindowGeometry, windowMaterial);
+                        sideWindow.position.set(sideX, floorY, windowZ);
+                        sideWindow.rotation.y = rotation;
+                        buildingGroup.add(sideWindow);
+                    }
+                }
+            }
+            
+            // Entrance area
+            const entranceGeometry = new THREE.BoxGeometry(4, 3.5, 1);
+            const entrance = new THREE.Mesh(entranceGeometry, accentMaterial);
+            entrance.position.set(0, 1.75, 5.5);
+            buildingGroup.add(entrance);
+            
+            // Glass entrance doors
+            const doorGeometry = new THREE.PlaneGeometry(1.8, 3);
+            const door = new THREE.Mesh(doorGeometry, windowMaterial);
+            door.position.set(0, 1.5, 6.1);
+            buildingGroup.add(door);
+            
+            // Building signage
+            const signGeometry = new THREE.PlaneGeometry(6, 1);
+            const signMaterial = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            const sign = new THREE.Mesh(signGeometry, signMaterial);
+            sign.position.set(0, 4, 5.1);
+            buildingGroup.add(sign);
+            
+            // Air conditioning units
+            for (let floor = 0; floor < floors; floor++) {
+                for (let unit = 0; unit < 2; unit++) {
+                    const acGeometry = new THREE.BoxGeometry(0.8, 0.6, 0.4);
+                    const acMaterial = new THREE.MeshLambertMaterial({ color: 0x95a5a6 });
+                    const ac = new THREE.Mesh(acGeometry, acMaterial);
+                    ac.position.set(-6 + unit * 12, 3 + floor * 4, 4.8);
+                    buildingGroup.add(ac);
+                }
+            }
+            
+            // Rooftop equipment
+            const equipmentPositions = [
+                { x: -3, z: -2 }, { x: 3, z: -2 }, { x: 0, z: 2 }
+            ];
+            equipmentPositions.forEach(pos => {
+                const equipGeometry = new THREE.BoxGeometry(1.5, 1.2, 1);
+                const equipment = new THREE.Mesh(equipGeometry, accentMaterial);
+                equipment.position.set(pos.x, 23, pos.z);
+                equipment.castShadow = true;
+                buildingGroup.add(equipment);
+            });
+            
+            scene.add(buildingGroup);
+            model = buildingGroup; // Store reference
+            
+            // Add sensor hotspots
+            addSensorHotspots();
+        }
+        
+        // Keep the old function for backwards compatibility
+        function createPlaceholderBuilding() {
+            createEnhancedPlaceholderBuilding();
+        }
+        
+        function addSensorHotspots() {
+            // Define sensor locations on the enhanced building
+            const sensorLocations = [
+                // Floor 1 sensors
+                { x: -5, y: 3, z: 5.5, type: 'temperature', floor: 1, name: 'Temperature Sensor - Lobby', value: '22.5°C' },
+                { x: 5, y: 3, z: 5.5, type: 'humidity', floor: 1, name: 'Humidity Sensor - Entrance', value: '45%' },
+                
+                // Floor 2 sensors
+                { x: -3.5, y: 7, z: 5.5, type: 'air_quality', floor: 2, name: 'Air Quality Monitor - Unit 2A', value: 'Good' },
+                { x: 3.5, y: 7, z: 5.5, type: 'occupancy', floor: 2, name: 'Occupancy Sensor - Floor 2', value: '3/4 units' },
+                
+                // Floor 3 sensors
+                { x: -5, y: 11, z: 5.5, type: 'energy', floor: 3, name: 'Energy Monitor - Floor 3', value: '3.2 kW' },
+                { x: 0, y: 11, z: 5.5, type: 'security', floor: 3, name: 'Security Camera - Main Facade', value: 'Active' },
+                
+                // Floor 4 sensors
+                { x: 5, y: 15, z: 5.5, type: 'smoke', floor: 4, name: 'Smoke Detector - Unit 4B', value: 'Normal' },
+                { x: -2, y: 15, z: 5.5, type: 'motion', floor: 4, name: 'Motion Sensor - Hallway', value: 'Clear' },
+                
+                // Penthouse sensors
+                { x: 0, y: 20, z: 4, type: 'climate', floor: 'PH', name: 'Climate Control - Penthouse', value: '24.1°C' },
+                
+                // Rooftop sensors
+                { x: 0, y: 23, z: 0, type: 'weather', floor: 'Roof', name: 'Weather Station', value: '18.3°C' },
+                { x: -3, y: 23, z: -2, type: 'solar', floor: 'Roof', name: 'Solar Panel Monitor', value: '2.1 kW' },
+                { x: 3, y: 23, z: 2, type: 'water', floor: 'Roof', name: 'Water Tank Monitor', value: '85% Full' },
+                
+                // Side sensors
+                { x: -7.5, y: 9, z: 0, type: 'vibration', floor: 'Structure', name: 'Structural Monitor - West', value: 'Stable' },
+                { x: 7.5, y: 9, z: 0, type: 'vibration', floor: 'Structure', name: 'Structural Monitor - East', value: 'Stable' }
+            ];
+            
+            sensorLocations.forEach(location => {
+                const hotspot = createSensorHotspot(location);
+                scene.add(hotspot);
+            });
+        }
+        
+        function createSensorHotspot(location) {
+            const hotspotGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const hotspotMaterial = new THREE.MeshBasicMaterial({ 
+                color: getSensorColor(location.type),
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
+            hotspot.position.set(location.x, location.y, location.z);
+            hotspot.userData = { 
+                type: location.type, 
+                floor: location.floor,
+                name: location.name,
+                value: location.value,
+                id: `sensor_${location.type}_${location.floor}`
+            };
+            
+            // Add pulsing animation
+            hotspot.scale.setScalar(1);
+            
+            // Add click listener
+            hotspot.callback = function() {
+                showSensorDetails(location);
+            };
+            
+            return hotspot;
+        }
+        
+        function getSensorColor(type) {
+            const colors = {
+                temperature: 0xff6b6b,    // Red
+                humidity: 0x4ecdc4,       // Turquoise
+                air_quality: 0x45b7d1,   // Blue
+                occupancy: 0xf7dc6f,     // Yellow
+                energy: 0xbb8fce,        // Purple
+                security: 0x82e0aa,      // Green
+                weather: 0xf8c471,       // Orange
+                smoke: 0xff4757,         // Bright Red
+                motion: 0xffa502,        // Bright Orange
+                climate: 0x00d2d3,       // Cyan
+                solar: 0xffb8b8,         // Light Red
+                water: 0x2ed573,         // Bright Green
+                vibration: 0x747d8c      // Gray Blue
+            };
+            return colors[type] || 0x3b82f6;
+        }
+        
+        function showSensorDetails(location) {
+            const tooltip = document.getElementById('tooltip');
+            const value = getSensorValue(location.type);
+            
+            tooltip.innerHTML = `
+                <strong>${location.name}</strong><br>
+                Floor: ${location.floor}<br>
+                Current Value: ${value}<br>
+                Status: <span style="color: #10b981;">Online</span><br>
+                Last Update: ${new Date().toLocaleTimeString()}
+            `;
+            
+            tooltip.style.opacity = '1';
+            
+            // Hide after 4 seconds
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+            }, 4000);
+        }
+        
+        function getSensorValue(type) {
+            switch(type) {
+                case 'temperature': return `${(20 + Math.random() * 8).toFixed(1)}°C`;
+                case 'humidity': return `${(40 + Math.random() * 20).toFixed(0)}%`;
+                case 'air_quality': return ['Good', 'Fair', 'Poor'][Math.floor(Math.random() * 3)];
+                case 'occupancy': return `${Math.floor(Math.random() * 8)}/8 units`;
+                case 'energy': return `${(2 + Math.random() * 3).toFixed(1)} kW`;
+                case 'security': return ['Active', 'Recording', 'Alert'][Math.floor(Math.random() * 3)];
+                case 'weather': return `${(15 + Math.random() * 15).toFixed(1)}°C`;
+                case 'smoke': return ['Normal', 'Elevated', 'Warning'][Math.floor(Math.random() * 3)];
+                case 'motion': return ['Clear', 'Motion Detected', 'Idle'][Math.floor(Math.random() * 3)];
+                case 'climate': return `${(22 + Math.random() * 4).toFixed(1)}°C / ${(40 + Math.random() * 20).toFixed(0)}% RH`;
+                case 'solar': return `${(1 + Math.random() * 3).toFixed(1)} kW`;
+                case 'water': return `${(70 + Math.random() * 25).toFixed(0)}% Full`;
+                case 'vibration': return `${(0.1 + Math.random() * 0.5).toFixed(2)} mm/s`;
+                default: return 'N/A';
+            }
+        }
+        
+        function setupEventListeners() {
+            // Window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Mouse events for hotspots
+            renderer.domElement.addEventListener('click', onMouseClick);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            
+            // UI Controls
+            document.getElementById('cameraView').addEventListener('change', changeCameraView);
+            document.getElementById('lightingMode').addEventListener('change', changeLightingMode);
+            document.getElementById('resetCamera').addEventListener('click', resetCamera);
+            document.getElementById('toggleHotspots').addEventListener('click', toggleHotspots);
+            document.getElementById('viewAlerts').addEventListener('click', showAlerts);
+            document.getElementById('scheduleMain').addEventListener('click', scheduleMaintenanc);
+            document.getElementById('emergencyMode').addEventListener('click', activateEmergencyMode);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function onMouseClick(event) {
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (object.callback) {
+                    object.callback();
+                }
+            }
+        }
+        
+        function onMouseMove(event) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.left = event.clientX + 10 + 'px';
+            tooltip.style.top = event.clientY - 10 + 'px';
+            
+            // Check for hover over sensor hotspots
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (object.userData && object.userData.type) {
+                    // Change cursor to pointer for interactive objects
+                    renderer.domElement.style.cursor = 'pointer';
+                    
+                    // Show mini tooltip on hover
+                    tooltip.innerHTML = `
+                        <strong>${object.userData.name}</strong><br>
+                        Click for details
+                    `;
+                    tooltip.style.opacity = '0.7';
+                } else {
+                    renderer.domElement.style.cursor = 'default';
+                    tooltip.style.opacity = '0';
+                }
+            } else {
+                renderer.domElement.style.cursor = 'default';
+                tooltip.style.opacity = '0';
+            }
+        }
+        
+        function changeCameraView() {
+            const view = document.getElementById('cameraView').value;
+            
+            switch(view) {
+                case 'overview':
+                    camera.position.set(30, 20, 30);
+                    controls.target.set(0, 8, 0);
+                    break;
+                case 'floor1':
+                    camera.position.set(15, 6, 15);
+                    controls.target.set(0, 6, 0);
+                    break;
+                case 'floor2':
+                    camera.position.set(15, 10, 15);
+                    controls.target.set(0, 10, 0);
+                    break;
+                case 'rooftop':
+                    camera.position.set(10, 25, 10);
+                    controls.target.set(0, 18, 0);
+                    break;
+            }
+            controls.update();
+        }
+        
+        function changeLightingMode() {
+            const mode = document.getElementById('lightingMode').value;
+            
+            switch(mode) {
+                case 'day':
+                    scene.background = new THREE.Color(0x87CEEB);
+                    // Update lighting for day
+                    break;
+                case 'night':
+                    scene.background = new THREE.Color(0x191970);
+                    // Update lighting for night
+                    break;
+                case 'maintenance':
+                    scene.background = new THREE.Color(0x2F4F4F);
+                    // Update lighting for maintenance
+                    break;
+            }
+        }
+        
+        function resetCamera() {
+            camera.position.set(30, 20, 30);
+            controls.target.set(0, 8, 0);
+            controls.update();
+        }
+        
+        function toggleHotspots() {
+            hotspotsVisible = !hotspotsVisible;
+            scene.children.forEach(child => {
+                if (child.userData && child.userData.type) {
+                    child.visible = hotspotsVisible;
+                }
+            });
+        }
+        
+        function showAlerts() {
+            alert('Active Alerts:\n• HVAC System - Filter needs replacement\n• Fire Safety - Monthly inspection due\n• Elevator - Minor maintenance required');
+        }
+        
+        function scheduleMaintenanc() {
+            alert('Maintenance Scheduler:\n• HVAC Filter: Scheduled for tomorrow\n• Fire Safety Check: Scheduled for next week\n• Elevator Service: Scheduled for Friday');
+        }
+        
+        function activateEmergencyMode() {
+            if (confirm('Activate Emergency Mode?\nThis will:\n• Lock all entrances\n• Activate emergency lighting\n• Send alerts to emergency services')) {
+                scene.background = new THREE.Color(0x8B0000);
+                alert('Emergency Mode Activated!\nEmergency services have been notified.');
+            }
+        }
+        
+        function startDataSimulation() {
+            // Simulate real-time sensor data updates
+            setInterval(() => {
+                updateSensorData();
+                updateUI();
+            }, 2000);
+        }
+        
+        function updateSensorData() {
+            // Generate random sensor data
+            sensorData = {
+                temperature: (20 + Math.random() * 8).toFixed(1),
+                humidity: (40 + Math.random() * 20).toFixed(0),
+                airQuality: ['Good', 'Fair', 'Poor'][Math.floor(Math.random() * 3)],
+                occupancy: Math.floor(Math.random() * 8) + 1,
+                energy: (2 + Math.random() * 3).toFixed(1),
+                water: (200 + Math.random() * 100).toFixed(0),
+                activeAlerts: Math.floor(Math.random() * 5),
+                maintenanceDue: Math.floor(Math.random() * 6) + 1
+            };
+        }
+        
+        function updateUI() {
+            // Update sensor displays
+            document.getElementById('temperature').textContent = sensorData.temperature + '°C';
+            document.getElementById('humidity').textContent = sensorData.humidity + '%';
+            document.getElementById('airQuality').textContent = sensorData.airQuality;
+            document.getElementById('occupancy').textContent = sensorData.occupancy + '/8';
+            document.getElementById('energy').textContent = sensorData.energy + ' kW';
+            document.getElementById('water').textContent = sensorData.water + ' L/day';
+            document.getElementById('activeAlerts').textContent = sensorData.activeAlerts;
+            document.getElementById('maintenanceDue').textContent = sensorData.maintenanceDue + ' items';
+            
+            // Update alert styling
+            const alertsElement = document.getElementById('activeAlerts');
+            alertsElement.className = 'stat-value';
+            if (sensorData.activeAlerts > 3) {
+                alertsElement.classList.add('critical');
+            } else if (sensorData.activeAlerts > 1) {
+                alertsElement.classList.add('warning');
+            }
+            
+            // Update air quality color
+            const airQualityElement = document.getElementById('airQuality');
+            airQualityElement.className = 'sensor-value';
+            if (sensorData.airQuality === 'Poor') {
+                airQualityElement.style.color = '#ef4444';
+            } else if (sensorData.airQuality === 'Fair') {
+                airQualityElement.style.color = '#f59e0b';
+            } else {
+                airQualityElement.style.color = '#10b981';
+            }
+        }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // Update controls
+            controls.update();
+            
+            // Update mixer for animations
+            if (mixer) {
+                mixer.update(0.016);
+            }
+            
+            // Animate sensor hotspots
+            const time = Date.now() * 0.001;
+            scene.children.forEach(child => {
+                if (child.userData && child.userData.type) {
+                    child.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+                }
+            });
+            
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
