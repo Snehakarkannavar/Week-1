@@ -1,217 +1,140 @@
-# Enhanced IoT Building Maintenance Dashboard
+# IoT Building Maintenance Dashboard
 
-## 🎯 Quick Start
+A comprehensive 3D IoT dashboard for monitoring and managing a Japanese-style apartment building with real-time sensor data visualization and maintenance tracking.
 
-### Option 1: Open Directly
-Simply open `enhanced_building_dashboard.html` in any modern web browser.
+## Features
 
-### Option 2: Local Server (Recommended)
-```bash
-# Navigate to the project directory
-cd /workspace
+### 🏢 Realistic 3D Building Model
+- **Multi-story Structure**: Ground floor commercial space + 3 residential floors + penthouse
+- **Detailed Architecture**: Realistic windows with frames, balconies with railings, entrance with overhang
+- **Building Equipment**: HVAC units, solar panels, satellite dish, security cameras
+- **External Details**: Air conditioning units, utility meters, pipes, and realistic textures
 
-# Start a local server
-python3 -m http.server 8000
-
-# Open in browser
-# http://localhost:8000/enhanced_building_dashboard.html
-```
-
-## ✨ Features Overview
-
-### 🏢 Realistic 3D Building
-- **Japanese apartment complex** with authentic architectural details
-- **4 floors + rooftop** with 12 residential units
-- **Detailed textures** including brick walls and reflective windows
-- **Complete infrastructure** with balconies, utilities, and solar panels
-
-### 🌐 Smart Sensor Network
-- **21 IoT sensors** strategically placed throughout the building
-- **Real-time monitoring** of temperature, humidity, air quality, security
-- **Color-coded visualization** for easy identification
-- **Interactive sensor details** with click-to-view information
+### 📊 Comprehensive IoT Sensors
+- **Temperature Sensors**: Multi-zone monitoring with HVAC integration
+- **Humidity Control**: Real-time moisture level tracking
+- **Air Quality**: Indoor environmental monitoring
+- **Occupancy Detection**: Room-by-room presence tracking
+- **Energy Management**: Power consumption and solar generation
+- **Security Systems**: Motion detection and access control
+- **Weather Station**: Rooftop environmental monitoring
+- **HVAC Monitoring**: Temperature and status for each unit
+- **Power Meters**: Individual circuit monitoring
+- **Window Sensors**: Open/close status tracking
 
 ### 🎮 Interactive Controls
+- **Camera Views**: Overview, floor-specific, and rooftop perspectives
+- **Lighting Modes**: Day, night, and maintenance lighting
+- **Sensor Visualization**: Toggle hotspots on/off
+- **Real-time Data**: Live updating sensor readings
+- **Emergency Mode**: Quick access to emergency protocols
 
-#### Camera Views
-- **Overview**: Complete building perspective
-- **Ground Floor**: Lobby and entrance monitoring
-- **Residential Floors**: Individual floor inspection
-- **Rooftop**: Solar panels and weather station
+### 📈 Data Visualization
+- **Animated Sensors**: Different animation patterns for each sensor type
+  - Temperature: Heat simulation with pulsing
+  - Energy: Rapid pulse indicating power flow
+  - Security: Sweeping motion for monitoring
+  - Occupancy: Vertical movement showing activity
+- **Interactive Tooltips**: Detailed sensor information on click
+- **Status Indicators**: Color-coded system status
+- **Real-time Updates**: Data refreshes every 2 seconds
 
-#### Visualization Modes
-- **Normal**: Standard sensor display
-- **Thermal Mapping**: Temperature sensor focus
-- **Occupancy**: Motion and presence detection
-- **Energy Flow**: Power consumption visualization
-- **Maintenance**: Critical system highlighting
+### 🚨 Maintenance & Alerts
+- **Active Alerts**: Real-time system notifications
+- **Maintenance Scheduling**: Automated maintenance reminders
+- **Emergency Protocols**: Quick emergency response activation
+- **System Status**: Overall building health monitoring
 
-### 📊 Live Dashboard Panels
+## Technical Implementation
 
-#### Building Overview (Top Left)
-- Building name and status
-- Total floors and units
-- Active sensor count
-- Last inspection time
+### Technologies Used
+- **Three.js**: 3D rendering and visualization
+- **WebGL**: Hardware-accelerated graphics
+- **HTML5/CSS3**: Modern web interface
+- **JavaScript ES6**: Interactive functionality
 
-#### Smart Controls (Top Right)
-- Camera position controls
-- Visualization mode selection
-- Day/night time settings
-- Data flow toggles
+### Building Structure
+```
+Penthouse Floor (17.5m)    - Premium units with enhanced sensors
+├── Floor 3 (12m)          - Residential units C1, C2
+├── Floor 2 (9m)           - Residential units B1, B2  
+├── Floor 1 (6m)           - Residential units A1, A2
+└── Ground Floor (2m)      - Commercial space + utilities
+```
 
-#### Sensor Network (Bottom Left)
-- Real-time sensor readings
-- Network connectivity status
-- Security system monitoring
-- Environmental data
+### Sensor Network
+- **13 Active Sensors** strategically placed throughout the building
+- **Real-time Monitoring** with battery level tracking
+- **Unit-specific Identification** for precise maintenance
+- **Multi-protocol Support** for various IoT devices
 
-#### Maintenance System (Bottom Right)
-- Active alerts counter
-- Predictive maintenance issues
-- AI-optimized scheduling
-- Emergency protocol access
+## Usage Instructions
 
-## 🎯 How to Use
+1. **Navigation**: Use mouse to orbit around the building (left-click + drag)
+2. **Zoom**: Mouse wheel to zoom in/out
+3. **Camera Presets**: Use dropdown menu for quick view changes
+4. **Sensor Interaction**: Click on glowing sensor hotspots for details
+5. **Lighting Control**: Switch between day/night/maintenance modes
+6. **Emergency Mode**: Quick access for emergency situations
 
-### Navigation
-1. **Rotate**: Click and drag to rotate around the building
-2. **Zoom**: Scroll wheel to zoom in/out
-3. **Pan**: Right-click and drag to pan view
-4. **Reset**: Click "Reset View" button to return to default
+## Sensor Data Types
 
-### Sensor Interaction
-1. **Click any sensor** (colored spheres) to view detailed information
-2. **Sensor tooltip** shows:
-   - Sensor type and ID
-   - Current readings
-   - Location details
-   - Online status
-   - Critical alerts (if any)
+| Sensor Type | Units | Range | Update Frequency |
+|------------|-------|--------|------------------|
+| Temperature | °C | 20-28°C | 2 seconds |
+| Humidity | % | 40-60% | 2 seconds |
+| Air Quality | Index | Good/Fair/Poor | 5 seconds |
+| Occupancy | Count | 0-4 per unit | 1 second |
+| Energy | kW | 2-5 kW | 1 second |
+| HVAC | Status | Running/Idle/Maintenance | 10 seconds |
+| Security | Status | Secure/Motion Detected | Real-time |
 
-### View Modes
-1. **Camera Views**: Select different floors from dropdown
-2. **Visualization**: Switch between data analysis modes
-3. **Time Controls**: Toggle day/night or use auto mode
+## Building Specifications
 
-### Monitoring
-1. **Real-time data** updates every 2 seconds
-2. **Alert notifications** appear for critical issues
-3. **Status indicators** show system health
-4. **Emergency button** for crisis situations
+- **Total Floors**: 4 + Penthouse
+- **Residential Units**: 8 apartments
+- **Commercial Space**: Ground floor
+- **Roof Equipment**: 2x HVAC units, Solar panels, Weather station
+- **Security**: 2x Front cameras, Multiple sensors
+- **Utilities**: Electrical meters, Gas connections, Water monitoring
 
-## 🚨 Alert System
+## Future Enhancements
 
-### Alert Types
-- 🔥 **Critical**: Smoke, fire, water leaks
-- ⚠️ **Warning**: Temperature, humidity anomalies
-- ℹ️ **Info**: Routine maintenance notifications
-- 🤖 **Predictive**: AI-detected potential issues
+- [ ] Real IoT device integration via MQTT/WebSocket
+- [ ] Historical data charts and analytics
+- [ ] Mobile responsive design
+- [ ] Voice control integration
+- [ ] AR/VR compatibility
+- [ ] Machine learning predictions
+- [ ] Energy optimization algorithms
+- [ ] Tenant portal integration
 
-### Emergency Features
-- **One-click emergency activation**
-- **Visual alarm system**
-- **Automatic emergency services contact**
-- **Building lockdown procedures**
+## Installation
 
-## 🔧 Technical Details
+1. Download the `iot-dashboard.html` file
+2. Open in a modern web browser (Chrome, Firefox, Safari, Edge)
+3. No additional installation required - runs entirely in browser
+4. For local server: Use any HTTP server (e.g., Python's `python -m http.server`)
 
-### Sensor Types
-- **Temperature**: 6 sensors (18-26°C range)
-- **Humidity**: 4 sensors (35-65% range)
-- **Smoke Detection**: 4 critical sensors
-- **Motion/Occupancy**: 3 sensors
-- **Air Quality**: 3 sensors (Excellent/Good/Fair/Poor)
-- **Security**: 2 access control points
-- **Utilities**: Power, water, solar monitoring
+## Browser Compatibility
 
-### Building Specifications
-- **Floors**: Ground + 3 residential + rooftop
-- **Units**: 12 apartments (3 per floor)
-- **Height**: Approximately 20 meters
-- **Features**: Balconies, solar panels, weather station
-- **Safety**: Full fire detection and security systems
+- ✅ Chrome 80+
+- ✅ Firefox 75+
+- ✅ Safari 13+
+- ✅ Edge 80+
+- ⚠️ Mobile browsers (limited performance)
 
-### Performance
-- **3D Rendering**: Hardware-accelerated WebGL
-- **Frame Rate**: Smooth 60fps animation
-- **Memory Usage**: Optimized for web browsers
-- **Compatibility**: Modern browsers (Chrome, Firefox, Safari, Edge)
+## Performance Notes
 
-## 🎨 Visual Features
+- **Recommended**: Dedicated GPU for smooth 3D rendering
+- **RAM**: Minimum 4GB for optimal performance
+- **Network**: Lightweight - all assets load from CDN
+- **Responsive**: Adapts to different screen sizes
 
-### Realistic Elements
-- **Brick textures** with authentic patterns
-- **Reflective windows** with proper lighting
-- **Architectural details** including balcony railings
-- **Environmental context** with trees and parking
-- **Weather effects** and atmospheric lighting
+## License
 
-### UI Design
-- **Glassmorphism interface** with backdrop blur
-- **Smooth animations** and hover effects
-- **Color-coded status indicators**
-- **Responsive design** for different screen sizes
-
-## 📱 Browser Compatibility
-
-### Recommended Browsers
-- **Chrome**: 90+ (Best performance)
-- **Firefox**: 88+ (Full compatibility)
-- **Safari**: 14+ (Good performance)
-- **Edge**: 90+ (Full compatibility)
-
-### System Requirements
-- **RAM**: 4GB minimum, 8GB recommended
-- **Graphics**: Hardware-accelerated WebGL support
-- **Internet**: Not required (runs locally)
-
-## 🔍 Troubleshooting
-
-### Common Issues
-1. **Slow performance**: Try reducing browser zoom or closing other tabs
-2. **Missing 3D model**: Ensure WebGL is enabled in browser
-3. **Sensor not clickable**: Make sure you're clicking directly on the colored spheres
-4. **Loading stuck**: Refresh the page and wait for all assets to load
-
-### Debug Information
-- Open browser developer tools (F12) to see console messages
-- Check for any JavaScript errors in the console
-- Ensure all Three.js libraries are loading properly
-
-## 🚀 Advanced Features
-
-### Data Analysis
-- **Real-time correlation** between sensor readings
-- **Historical trends** and pattern recognition
-- **Predictive analytics** for maintenance scheduling
-- **Energy optimization** recommendations
-
-### Customization
-- **Sensor threshold** adjustment
-- **Alert notification** preferences
-- **Visualization color** schemes
-- **Dashboard layout** options
-
-## 📈 Future Enhancements
-
-### Planned Features
-- **Historical data graphs**
-- **Mobile app integration**
-- **Voice control interface**
-- **AR/VR compatibility**
-- **Machine learning insights**
-
-### Integration Options
-- **MQTT broker** connectivity
-- **REST API** endpoints
-- **Database integration** (MySQL, PostgreSQL)
-- **Cloud platform** support (AWS, Azure, GCP)
+This project is open source and available under the MIT License.
 
 ---
 
-## 🆘 Support
-
-If you encounter any issues or have questions about the Enhanced IoT Building Maintenance Dashboard, please refer to the `Enhanced_Dashboard_Features.md` file for detailed feature descriptions.
-
-**Enjoy exploring your smart building! 🏢✨**
+*Built with modern web technologies for the future of smart building management.*

@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1252,6 +1252,8 @@ THIS SHOULD BE A LINTER ERROR<!DOCTYPE html>
             document.getElementById('water').textContent = sensorData.water + ' L/day';
             document.getElementById('activeAlerts').textContent = sensorData.activeAlerts;
             document.getElementById('maintenanceDue').textContent = sensorData.maintenanceDue + ' items';
+            document.getElementById('hvacStatus').textContent = sensorData.hvacStatus;
+            document.getElementById('powerDraw').textContent = sensorData.powerDraw + 'W';
             
             // Update alert styling
             const alertsElement = document.getElementById('activeAlerts');
@@ -1271,6 +1273,17 @@ THIS SHOULD BE A LINTER ERROR<!DOCTYPE html>
                 airQualityElement.style.color = '#f59e0b';
             } else {
                 airQualityElement.style.color = '#10b981';
+            }
+            
+            // Update HVAC status color
+            const hvacElement = document.getElementById('hvacStatus');
+            hvacElement.className = 'sensor-value';
+            if (sensorData.hvacStatus === 'Maintenance') {
+                hvacElement.style.color = '#ef4444';
+            } else if (sensorData.hvacStatus === 'Idle') {
+                hvacElement.style.color = '#f59e0b';
+            } else {
+                hvacElement.style.color = '#10b981';
             }
         }
         
