@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+THIS SHOULD BE A LINTER ERROR<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -443,6 +443,14 @@
                         <div class="sensor-title">Occupancy</div>
                         <div class="sensor-value" id="occupancy">6/8</div>
                     </div>
+                    <div class="sensor-card">
+                        <div class="sensor-title">HVAC Status</div>
+                        <div class="sensor-value" id="hvacStatus">Running</div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-title">Power Draw</div>
+                        <div class="sensor-value" id="powerDraw">85W</div>
+                    </div>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Energy Consumption:</span>
@@ -687,67 +695,61 @@
         }
         
         function createPlaceholderBuilding() {
-            // Create a simple Japanese apartment-style building
+            // Create a realistic Japanese apartment-style building
             const buildingGroup = new THREE.Group();
             
-            // Main building structure
-            const buildingGeometry = new THREE.BoxGeometry(12, 16, 8);
-            const buildingMaterial = new THREE.MeshLambertMaterial({ color: 0xd4b896 });
+            // Ground floor - Commercial space
+            const groundFloorGeometry = new THREE.BoxGeometry(14, 4, 10);
+            const groundFloorMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xc4a484,
+                shininess: 30
+            });
+            const groundFloor = new THREE.Mesh(groundFloorGeometry, groundFloorMaterial);
+            groundFloor.position.y = 2;
+            groundFloor.castShadow = true;
+            groundFloor.receiveShadow = true;
+            buildingGroup.add(groundFloor);
+            
+            // Main building structure (floors 2-4)
+            const buildingGeometry = new THREE.BoxGeometry(12, 12, 8);
+            const buildingMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xe6d7c3,
+                shininess: 20
+            });
             const mainBuilding = new THREE.Mesh(buildingGeometry, buildingMaterial);
-            mainBuilding.position.y = 8;
+            mainBuilding.position.y = 10;
             mainBuilding.castShadow = true;
             mainBuilding.receiveShadow = true;
             buildingGroup.add(mainBuilding);
             
-            // Roof
-            const roofGeometry = new THREE.ConeGeometry(8, 3, 4);
-            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            // Penthouse floor
+            const penthouseGeometry = new THREE.BoxGeometry(10, 3, 6);
+            const penthouseMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xd4c5a9,
+                shininess: 40
+            });
+            const penthouse = new THREE.Mesh(penthouseGeometry, penthouseMaterial);
+            penthouse.position.y = 17.5;
+            penthouse.castShadow = true;
+            penthouse.receiveShadow = true;
+            buildingGroup.add(penthouse);
+            
+            // Modern flat roof with equipment
+            const roofGeometry = new THREE.BoxGeometry(12, 0.3, 8);
+            const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
             const roof = new THREE.Mesh(roofGeometry, roofMaterial);
-            roof.position.y = 18;
-            roof.rotation.y = Math.PI / 4;
+            roof.position.y = 16.5;
             roof.castShadow = true;
             buildingGroup.add(roof);
             
-            // Windows
-            const windowGeometry = new THREE.PlaneGeometry(1.5, 2);
-            const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x4a90e2 });
+            // HVAC equipment on roof
+            addRooftopEquipment(buildingGroup);
             
-            // Front windows
-            for (let floor = 0; floor < 3; floor++) {
-                for (let window = 0; window < 3; window++) {
-                    const windowMesh = new THREE.Mesh(windowGeometry, windowMaterial);
-                    windowMesh.position.set(-3 + window * 3, 5 + floor * 4, 4.1);
-                    buildingGroup.add(windowMesh);
-                }
-            }
-            
-            // Side windows
-            for (let floor = 0; floor < 3; floor++) {
-                for (let window = 0; window < 2; window++) {
-                    const windowMesh = new THREE.Mesh(windowGeometry, windowMaterial);
-                    windowMesh.position.set(6.1, 5 + floor * 4, -2 + window * 4);
-                    windowMesh.rotation.y = Math.PI / 2;
-                    buildingGroup.add(windowMesh);
-                }
-            }
-            
-            // Door
-            const doorGeometry = new THREE.PlaneGeometry(2, 3);
-            const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-            const door = new THREE.Mesh(doorGeometry, doorMaterial);
-            door.position.set(0, 1.5, 4.1);
-            buildingGroup.add(door);
-            
-            // Balconies
-            const balconyGeometry = new THREE.BoxGeometry(4, 0.2, 1.5);
-            const balconyMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
-            
-            for (let floor = 1; floor < 3; floor++) {
-                const balcony = new THREE.Mesh(balconyGeometry, balconyMaterial);
-                balcony.position.set(0, 5 + floor * 4, 5);
-                balcony.castShadow = true;
-                buildingGroup.add(balcony);
-            }
+            // Add realistic building features
+            addRealisticWindows(buildingGroup);
+            addMainEntrance(buildingGroup);
+            addBalconiesWithRailings(buildingGroup);
+            addExternalDetails(buildingGroup);
             
             scene.add(buildingGroup);
             model = buildingGroup; // Store reference
@@ -756,16 +758,220 @@
             addSensorHotspots();
         }
         
+        function addRooftopEquipment(buildingGroup) {
+            // HVAC units
+            const hvacGeometry = new THREE.BoxGeometry(2, 1.5, 1.5);
+            const hvacMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+            
+            const hvac1 = new THREE.Mesh(hvacGeometry, hvacMaterial);
+            hvac1.position.set(-3, 17.5, 2);
+            hvac1.castShadow = true;
+            buildingGroup.add(hvac1);
+            
+            const hvac2 = new THREE.Mesh(hvacGeometry, hvacMaterial);
+            hvac2.position.set(3, 17.5, -2);
+            hvac2.castShadow = true;
+            buildingGroup.add(hvac2);
+            
+            // Solar panels
+            const panelGeometry = new THREE.BoxGeometry(3, 0.1, 2);
+            const panelMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a2e });
+            
+            for (let i = 0; i < 3; i++) {
+                const panel = new THREE.Mesh(panelGeometry, panelMaterial);
+                panel.position.set(-3 + i * 2, 17, 0);
+                buildingGroup.add(panel);
+            }
+            
+            // Satellite dish
+            const dishGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+            const dishMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const dish = new THREE.Mesh(dishGeometry, dishMaterial);
+            dish.position.set(4, 17.5, 2);
+            dish.scale.y = 0.3;
+            buildingGroup.add(dish);
+        }
+        
+        function addRealisticWindows(buildingGroup) {
+            const windowGlassMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x87ceeb,
+                transparent: true,
+                opacity: 0.6,
+                shininess: 100
+            });
+            const frameMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
+            
+            // Ground floor large windows
+            const largeWindowGeometry = new THREE.PlaneGeometry(2.5, 3);
+            const largeFrameGeometry = new THREE.PlaneGeometry(2.7, 3.2);
+            
+            for (let i = 0; i < 4; i++) {
+                const frame = new THREE.Mesh(largeFrameGeometry, frameMaterial);
+                frame.position.set(-4.5 + i * 3, 2.5, 5.05);
+                buildingGroup.add(frame);
+                
+                const window = new THREE.Mesh(largeWindowGeometry, windowGlassMaterial);
+                window.position.set(-4.5 + i * 3, 2.5, 5.1);
+                buildingGroup.add(window);
+            }
+            
+            // Regular apartment windows with realistic frames
+            const windowGeometry = new THREE.PlaneGeometry(1.4, 1.8);
+            const frameGeometry = new THREE.PlaneGeometry(1.6, 2);
+            
+            // Front windows (floors 2-4)
+            for (let floor = 1; floor <= 3; floor++) {
+                for (let window = 0; window < 4; window++) {
+                    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+                    frame.position.set(-4.5 + window * 3, 4 + floor * 3, 4.05);
+                    buildingGroup.add(frame);
+                    
+                    const windowMesh = new THREE.Mesh(windowGeometry, windowGlassMaterial);
+                    windowMesh.position.set(-4.5 + window * 3, 4 + floor * 3, 4.1);
+                    buildingGroup.add(windowMesh);
+                    
+                    // Window sills
+                    const sillGeometry = new THREE.BoxGeometry(1.8, 0.1, 0.2);
+                    const sillMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+                    const sill = new THREE.Mesh(sillGeometry, sillMaterial);
+                    sill.position.set(-4.5 + window * 3, 4 + floor * 3 - 1, 4.2);
+                    buildingGroup.add(sill);
+                }
+            }
+            
+            // Side windows
+            for (let floor = 1; floor <= 3; floor++) {
+                for (let window = 0; window < 2; window++) {
+                    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+                    frame.position.set(6.05, 4 + floor * 3, -2 + window * 4);
+                    frame.rotation.y = Math.PI / 2;
+                    buildingGroup.add(frame);
+                    
+                    const windowMesh = new THREE.Mesh(windowGeometry, windowGlassMaterial);
+                    windowMesh.position.set(6.1, 4 + floor * 3, -2 + window * 4);
+                    windowMesh.rotation.y = Math.PI / 2;
+                    buildingGroup.add(windowMesh);
+                }
+            }
+        }
+        
+        function addMainEntrance(buildingGroup) {
+            // Main entrance door
+            const doorGeometry = new THREE.PlaneGeometry(2.2, 3.2);
+            const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(0, 1.6, 5.05);
+            buildingGroup.add(door);
+            
+            // Door handle
+            const handleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.3);
+            const handleMaterial = new THREE.MeshPhongMaterial({ color: 0xffd700 });
+            const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+            handle.position.set(0.8, 1.6, 5.1);
+            handle.rotation.z = Math.PI / 2;
+            buildingGroup.add(handle);
+            
+            // Entrance overhang
+            const overhangGeometry = new THREE.BoxGeometry(4, 0.3, 2);
+            const overhangMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+            const overhang = new THREE.Mesh(overhangGeometry, overhangMaterial);
+            overhang.position.set(0, 3.5, 5.5);
+            overhang.castShadow = true;
+            buildingGroup.add(overhang);
+        }
+        
+        function addBalconiesWithRailings(buildingGroup) {
+            const balconyFloorGeometry = new THREE.BoxGeometry(4.5, 0.2, 1.8);
+            const balconyMaterial = new THREE.MeshPhongMaterial({ color: 0xd3d3d3 });
+            const railingMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+            
+            for (let floor = 2; floor <= 3; floor++) {
+                // Balcony floor
+                const balcony = new THREE.Mesh(balconyFloorGeometry, balconyMaterial);
+                balcony.position.set(0, 4 + floor * 3 - 1, 5.2);
+                balcony.castShadow = true;
+                buildingGroup.add(balcony);
+                
+                // Railings
+                const railingGeometry = new THREE.BoxGeometry(4.5, 1, 0.1);
+                const frontRailing = new THREE.Mesh(railingGeometry, railingMaterial);
+                frontRailing.position.set(0, 4 + floor * 3 - 0.5, 6);
+                buildingGroup.add(frontRailing);
+                
+                // Side railings
+                const sideRailingGeometry = new THREE.BoxGeometry(0.1, 1, 1.8);
+                const leftRailing = new THREE.Mesh(sideRailingGeometry, railingMaterial);
+                leftRailing.position.set(-2.2, 4 + floor * 3 - 0.5, 5.2);
+                buildingGroup.add(leftRailing);
+                
+                const rightRailing = new THREE.Mesh(sideRailingGeometry, railingMaterial);
+                rightRailing.position.set(2.2, 4 + floor * 3 - 0.5, 5.2);
+                buildingGroup.add(rightRailing);
+            }
+        }
+        
+        function addExternalDetails(buildingGroup) {
+            // Air conditioning units
+            const acGeometry = new THREE.BoxGeometry(1, 0.8, 0.5);
+            const acMaterial = new THREE.MeshPhongMaterial({ color: 0xf0f0f0 });
+            
+            for (let floor = 1; floor <= 3; floor++) {
+                const ac1 = new THREE.Mesh(acGeometry, acMaterial);
+                ac1.position.set(-5, 4 + floor * 3, 4.3);
+                buildingGroup.add(ac1);
+                
+                const ac2 = new THREE.Mesh(acGeometry, acMaterial);
+                ac2.position.set(5, 4 + floor * 3, 4.3);
+                buildingGroup.add(ac2);
+            }
+            
+            // Utility meters
+            const meterGeometry = new THREE.BoxGeometry(0.8, 1.2, 0.3);
+            const meterMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+            
+            const electricMeter = new THREE.Mesh(meterGeometry, meterMaterial);
+            electricMeter.position.set(-6, 1.5, 3.8);
+            buildingGroup.add(electricMeter);
+            
+            // External pipes
+            const pipeGeometry = new THREE.CylinderGeometry(0.1, 0.1, 16);
+            const pipeMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+            
+            const pipe1 = new THREE.Mesh(pipeGeometry, pipeMaterial);
+            pipe1.position.set(-5.8, 8, 3.9);
+            buildingGroup.add(pipe1);
+            
+            // Security cameras
+            const cameraGeometry = new THREE.BoxGeometry(0.3, 0.2, 0.4);
+            const cameraMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+            
+            const camera1 = new THREE.Mesh(cameraGeometry, cameraMaterial);
+            camera1.position.set(-2, 3.8, 5.2);
+            buildingGroup.add(camera1);
+            
+            const camera2 = new THREE.Mesh(cameraGeometry, cameraMaterial);
+            camera2.position.set(2, 3.8, 5.2);
+            buildingGroup.add(camera2);
+        }
+        
         function addSensorHotspots() {
-            // Define sensor locations on the building
+            // Enhanced sensor locations with more detailed positioning
             const sensorLocations = [
-                { x: -4, y: 6, z: 4.2, type: 'temperature', floor: 1 },
-                { x: 4, y: 6, z: 4.2, type: 'humidity', floor: 1 },
-                { x: -4, y: 10, z: 4.2, type: 'air_quality', floor: 2 },
-                { x: 4, y: 10, z: 4.2, type: 'occupancy', floor: 2 },
-                { x: -4, y: 14, z: 4.2, type: 'energy', floor: 3 },
-                { x: 4, y: 14, z: 4.2, type: 'security', floor: 3 },
-                { x: 0, y: 18, z: 0, type: 'weather', floor: 'roof' }
+                { x: -4, y: 6, z: 4.2, type: 'temperature', floor: 1, unit: 'A1' },
+                { x: 4, y: 6, z: 4.2, type: 'humidity', floor: 1, unit: 'A2' },
+                { x: -4, y: 9, z: 4.2, type: 'air_quality', floor: 2, unit: 'B1' },
+                { x: 4, y: 9, z: 4.2, type: 'occupancy', floor: 2, unit: 'B2' },
+                { x: -4, y: 12, z: 4.2, type: 'energy', floor: 3, unit: 'C1' },
+                { x: 4, y: 12, z: 4.2, type: 'security', floor: 3, unit: 'C2' },
+                { x: 0, y: 17.5, z: 0, type: 'weather', floor: 'roof', unit: 'ROOF' },
+                // HVAC sensors
+                { x: -3, y: 17.5, z: 2, type: 'hvac_temp', floor: 'roof', unit: 'HVAC1' },
+                { x: 3, y: 17.5, z: -2, type: 'hvac_temp', floor: 'roof', unit: 'HVAC2' },
+                // Ground floor sensors
+                { x: -6, y: 1.5, z: 3.8, type: 'power_meter', floor: 'ground', unit: 'MAIN' },
+                { x: 6.2, y: 6, z: 0, type: 'window_sensor', floor: 1, unit: 'SIDE' },
+                { x: 6.2, y: 9, z: 0, type: 'window_sensor', floor: 2, unit: 'SIDE' },
+                { x: 6.2, y: 12, z: 0, type: 'window_sensor', floor: 3, unit: 'SIDE' }
             ];
             
             sensorLocations.forEach(location => {
@@ -775,30 +981,61 @@
         }
         
         function createSensorHotspot(location) {
-            const hotspotGeometry = new THREE.SphereGeometry(0.3, 16, 16);
-            const hotspotMaterial = new THREE.MeshBasicMaterial({ 
+            const group = new THREE.Group();
+            
+            // Main sensor sphere
+            const hotspotGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const hotspotMaterial = new THREE.MeshPhongMaterial({ 
                 color: getSensorColor(location.type),
                 transparent: true,
-                opacity: 0.8
+                opacity: 0.9,
+                emissive: getSensorColor(location.type),
+                emissiveIntensity: 0.3
             });
             
             const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
-            hotspot.position.set(location.x, location.y, location.z);
-            hotspot.userData = { 
+            group.add(hotspot);
+            
+            // Outer glow ring
+            const ringGeometry = new THREE.RingGeometry(0.3, 0.5, 16);
+            const ringMaterial = new THREE.MeshBasicMaterial({ 
+                color: getSensorColor(location.type),
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.lookAt(camera.position);
+            group.add(ring);
+            
+            // Data visualization beam (for active sensors)
+            if (['temperature', 'humidity', 'energy'].includes(location.type)) {
+                const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2);
+                const beamMaterial = new THREE.MeshBasicMaterial({ 
+                    color: getSensorColor(location.type),
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+                beam.position.y = 1;
+                group.add(beam);
+            }
+            
+            group.position.set(location.x, location.y, location.z);
+            group.userData = { 
                 type: location.type, 
                 floor: location.floor,
-                id: `sensor_${location.type}_${location.floor}`
+                unit: location.unit,
+                id: `sensor_${location.type}_${location.floor}`,
+                originalPosition: { x: location.x, y: location.y, z: location.z }
             };
             
-            // Add pulsing animation
-            hotspot.scale.setScalar(1);
-            
             // Add click listener
-            hotspot.callback = function() {
+            group.callback = function() {
                 showSensorDetails(location);
             };
             
-            return hotspot;
+            return group;
         }
         
         function getSensorColor(type) {
@@ -809,7 +1046,10 @@
                 occupancy: 0xf7dc6f,
                 energy: 0xbb8fce,
                 security: 0x82e0aa,
-                weather: 0xf8c471
+                weather: 0xf8c471,
+                hvac_temp: 0xff8c42,
+                power_meter: 0xe74c3c,
+                window_sensor: 0x9b59b6
             };
             return colors[type] || 0x3b82f6;
         }
@@ -817,20 +1057,28 @@
         function showSensorDetails(location) {
             const tooltip = document.getElementById('tooltip');
             const value = getSensorValue(location.type);
+            const lastUpdate = new Date().toLocaleTimeString();
+            const batteryLevel = Math.floor(Math.random() * 40) + 60; // 60-100%
             
             tooltip.innerHTML = `
-                <strong>${location.type.replace('_', ' ').toUpperCase()}</strong><br>
-                Floor: ${location.floor}<br>
-                Value: ${value}<br>
-                Status: Online
+                <div style="min-width: 200px;">
+                    <strong>${location.type.replace('_', ' ').toUpperCase()}</strong><br>
+                    <hr style="margin: 5px 0; border-color: #555;">
+                    Unit: ${location.unit}<br>
+                    Floor: ${location.floor}<br>
+                    Current Value: <span style="color: #4CAF50;">${value}</span><br>
+                    Last Update: ${lastUpdate}<br>
+                    Battery: ${batteryLevel}%<br>
+                    <span style="color: #4CAF50;">● Online</span>
+                </div>
             `;
             
             tooltip.style.opacity = '1';
             
-            // Hide after 3 seconds
+            // Hide after 5 seconds
             setTimeout(() => {
                 tooltip.style.opacity = '0';
-            }, 3000);
+            }, 5000);
         }
         
         function getSensorValue(type) {
@@ -840,8 +1088,11 @@
                 case 'air_quality': return ['Good', 'Fair', 'Poor'][Math.floor(Math.random() * 3)];
                 case 'occupancy': return `${Math.floor(Math.random() * 4)}/4`;
                 case 'energy': return `${(2 + Math.random() * 3).toFixed(1)} kW`;
-                case 'security': return 'Secure';
+                case 'security': return ['Secure', 'Motion Detected'][Math.floor(Math.random() * 2)];
                 case 'weather': return `${(15 + Math.random() * 15).toFixed(1)}°C`;
+                case 'hvac_temp': return `${(18 + Math.random() * 6).toFixed(1)}°C`;
+                case 'power_meter': return `${(50 + Math.random() * 100).toFixed(0)}W`;
+                case 'window_sensor': return ['Closed', 'Open'][Math.floor(Math.random() * 2)];
                 default: return 'N/A';
             }
         }
@@ -976,7 +1227,7 @@
         }
         
         function updateSensorData() {
-            // Generate random sensor data
+            // Generate realistic sensor data with some correlation
             sensorData = {
                 temperature: (20 + Math.random() * 8).toFixed(1),
                 humidity: (40 + Math.random() * 20).toFixed(0),
@@ -985,7 +1236,9 @@
                 energy: (2 + Math.random() * 3).toFixed(1),
                 water: (200 + Math.random() * 100).toFixed(0),
                 activeAlerts: Math.floor(Math.random() * 5),
-                maintenanceDue: Math.floor(Math.random() * 6) + 1
+                maintenanceDue: Math.floor(Math.random() * 6) + 1,
+                hvacStatus: ['Running', 'Idle', 'Maintenance'][Math.floor(Math.random() * 3)],
+                powerDraw: (50 + Math.random() * 150).toFixed(0)
             };
         }
         
@@ -1032,11 +1285,34 @@
                 mixer.update(0.016);
             }
             
-            // Animate sensor hotspots
+            // Animate sensor hotspots with realistic data-driven effects
             const time = Date.now() * 0.001;
             scene.children.forEach(child => {
                 if (child.userData && child.userData.type) {
-                    child.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+                    // Different animation patterns based on sensor type
+                    if (child.userData.type === 'temperature' || child.userData.type === 'hvac_temp') {
+                        // Temperature sensors pulse with heat simulation
+                        child.scale.setScalar(1 + Math.sin(time * 3) * 0.15);
+                        child.rotation.y = time * 0.5;
+                    } else if (child.userData.type === 'energy' || child.userData.type === 'power_meter') {
+                        // Energy sensors have rapid pulse indicating power flow
+                        child.scale.setScalar(1 + Math.sin(time * 5) * 0.1);
+                    } else if (child.userData.type === 'security') {
+                        // Security sensors have sweeping motion
+                        child.rotation.y = time * 2;
+                        child.scale.setScalar(1 + Math.sin(time * 4) * 0.08);
+                    } else if (child.userData.type === 'occupancy') {
+                        // Occupancy sensors bob up and down
+                        child.position.y = child.userData.originalPosition.y + Math.sin(time * 2) * 0.3;
+                    } else {
+                        // Default gentle pulse for other sensors
+                        child.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+                    }
+                    
+                    // Update ring orientation to always face camera
+                    if (child.children.length > 1) {
+                        child.children[1].lookAt(camera.position);
+                    }
                 }
             });
             
